@@ -1,81 +1,92 @@
 # Agent Skills for Streamlit Development
 
-A collection of [Agent Skills](https://agentskills.io) for building Streamlit applications with AI coding assistants like Claude Code, Cursor, and other AI-powered development tools.
+A lightweight **meta-skill** that teaches AI coding assistants (Claude Code, Cursor, and others) how to discover and load the Streamlit development skills bundled inside the Streamlit pip package (1.57+).
 
 ## What are Agent Skills?
 
 Agent Skills are specialized instruction sets that enhance AI coding assistants' capabilities for specific tasks. Each skill contains instructions, scripts, and resources that the AI loads dynamically to improve performance on Streamlit development workflows.
 
-## Available skills
+The actual skill content (dashboards, themes, layouts, session state, custom components, etc.) ships with Streamlit itself — this repo only contains the entry point that bootstraps discovery.
 
-The main skill is [`developing-with-streamlit`](developing-with-streamlit/SKILL.md), which routes to specialized sub-skills:
+## How it works
 
-| Skill | Description |
-|-------|-------------|
-| [building-streamlit-chat-ui](developing-with-streamlit/skills/building-streamlit-chat-ui/) | Chat interfaces, chatbots, AI assistants |
-| [building-streamlit-dashboards](developing-with-streamlit/skills/building-streamlit-dashboards/) | KPI cards, metrics, dashboard layouts |
-| [building-streamlit-multipage-apps](developing-with-streamlit/skills/building-streamlit-multipage-apps/) | Multi-page app structure and navigation |
-| [building-streamlit-custom-components-v2](developing-with-streamlit/skills/building-streamlit-custom-components-v2/) | Streamlit Custom Components v2 (inline and template-based packaged), bidirectional state/trigger callbacks, bundling, theme CSS variables |
-| [choosing-streamlit-selection-widgets](developing-with-streamlit/skills/choosing-streamlit-selection-widgets/) | Choosing the right selection widget |
-| [connecting-streamlit-to-snowflake](developing-with-streamlit/skills/connecting-streamlit-to-snowflake/) | Connecting to Snowflake with st.connection |
-| [creating-streamlit-themes](developing-with-streamlit/skills/creating-streamlit-themes/) | Theme configuration, colors, fonts, light/dark modes, professional brand alignment, CSS avoidance |
-| [displaying-streamlit-data](developing-with-streamlit/skills/displaying-streamlit-data/) | Dataframes, column config, charts |
-| [improving-streamlit-design](developing-with-streamlit/skills/improving-streamlit-design/) | Icons, badges, spacing, text styling |
-| [optimizing-streamlit-performance](developing-with-streamlit/skills/optimizing-streamlit-performance/) | Caching, fragments, forms, static vs dynamic widgets |
-| [organizing-streamlit-code](developing-with-streamlit/skills/organizing-streamlit-code/) | Separating UI from business logic, modules |
-| [setting-up-streamlit-environment](developing-with-streamlit/skills/setting-up-streamlit-environment/) | Python environment setup |
-| [using-streamlit-cli](developing-with-streamlit/skills/using-streamlit-cli/) | CLI commands, running apps |
-| [using-streamlit-custom-components](developing-with-streamlit/skills/using-streamlit-custom-components/) | Third-party components from the community |
-| [using-streamlit-layouts](developing-with-streamlit/skills/using-streamlit-layouts/) | Sidebar, columns, containers, dialogs |
-| [using-streamlit-markdown](developing-with-streamlit/skills/using-streamlit-markdown/) | Colored text, badges, icons, LaTeX, markdown features |
-| [using-streamlit-session-state](developing-with-streamlit/skills/using-streamlit-session-state/) | Session state, widget keys, callbacks, state persistence |
+Starting with Streamlit 1.57, the full set of Streamlit development skills ships **inside the Streamlit pip package** itself. This repository provides a lightweight **meta-skill** that teaches agents how to discover and load those bundled skills.
 
-## Templates
+The meta-skill ([`developing-with-streamlit/SKILL.md`](developing-with-streamlit/SKILL.md)):
 
-The skill includes ready-to-use templates in `developing-with-streamlit/templates/`:
+1. Detects the active Python interpreter (virtualenv, conda, pipenv, poetry, pdm, uv, or system)
+2. Locates the installed Streamlit package path
+3. Points the agent to the bundled skills at `<streamlit_path>/.agents/skills/`
+4. Falls back to the [online docs](https://docs.streamlit.io/llms-full.txt) for older Streamlit versions
 
-- **`templates/apps/`** — 9 dashboard app templates (6 local + 3 Snowflake variants) with synthetic data, caching patterns, and layout best practices
-- **`templates/themes/`** — 8 theme templates (snowflake, dracula, nord, stripe, solarized-light, spotify, github, minimal) using Google Fonts
+### Install once, works with every project
 
-See each template directory's README for setup instructions.
+Because discovery happens dynamically against whichever interpreter is active, a single **user-level install** of this meta-skill works across every project on your machine — regardless of which Streamlit version each project pins. Upgrade a project's Streamlit and the agent automatically picks up the newer bundled skills; no re-install needed.
 
 ## Installation
 
-### Claude Code
+This repository contains a single meta-skill (`developing-with-streamlit`). **Install it once at the user level** — the meta-skill resolves the bundled skills dynamically from whichever Python interpreter is active, so one global install works across every project and every Streamlit version you use.
 
-Copy the parent skill folder to your Claude Code skills directory:
+### Cross-agent: `npx skills` (recommended)
+
+[`skills`](https://github.com/vercel-labs/skills) ([docs](https://skills.sh)) is a Vercel-published cross-agent installer that supports Claude Code, Cursor, Copilot, Gemini CLI, Codex, and others — one command, all agents:
 
 ```bash
-cp -r developing-with-streamlit ~/.claude/skills/
+npx skills add streamlit/agent-skills -s developing-with-streamlit -g
 ```
 
-Or reference skills directly in your project by adding them to your `.claude/skills/` directory.
+`-s` picks the specific skill from this repo; `-g` installs at the user level (global) so it works across every project. Drop `-g` to install into the current project's `.<agent>/skills/` directory instead. See `npx skills add --help` for the full flag list.
+
+### Claude Code
+
+Anthropic's Claude Code does not yet ship an official `skills install` CLI. Clone this repo and drop the skill folder into your user-level Claude skills directory:
+
+```bash
+git clone https://github.com/streamlit/agent-skills.git
+cp -r agent-skills/developing-with-streamlit ~/.claude/skills/
+```
+
+If you prefer project-scoped install, copy to `.claude/skills/` in your repo root instead. See the [Claude Code skills docs](https://docs.anthropic.com/en/docs/claude-code/skills) for the latest guidance.
+
+### GitHub Copilot
+
+```bash
+gh skill install streamlit/agent-skills developing-with-streamlit --scope user
+```
+
+Available via the GitHub CLI (`gh`) as of April 2026. Drop `--scope user` to install to the current repo only, or pin a version with `developing-with-streamlit@v1.0.0`. See the [Copilot agent skills docs](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/cloud-agent/add-skills).
 
 ### Cursor
 
-Copy the parent skill folder to your [Cursor skills directory](https://cursor.com/docs/context/skills):
+The same GitHub CLI supports Cursor via `--agent`:
 
 ```bash
-cp -r developing-with-streamlit ~/.cursor/skills/
+gh skill install streamlit/agent-skills developing-with-streamlit --agent cursor --scope user
 ```
 
-Or add skills directly to your project's `.cursor/skills/` directory.
+See the [Cursor skills docs](https://cursor.com/docs/context/skills) for alternative install flows (Settings UI, manual placement in `~/.cursor/skills/`).
+
+### Gemini CLI
+
+```bash
+gemini skills install https://github.com/streamlit/agent-skills.git
+```
+
+Defaults to `~/.gemini/skills/` (user scope). Add `--scope workspace` to install locally instead. See the [Gemini CLI skills docs](https://geminicli.com/docs/cli/skills/).
+
+### OpenAI Codex
+
+Codex installs skills interactively. From inside a Codex session, run:
+
+```
+$skill-installer
+```
+
+Then point the installer at `streamlit/agent-skills`. Skills land in `~/.codex/skills/` (user). See the [Codex skills docs](https://developers.openai.com/codex/skills/).
 
 ### Snowflake Cortex Code
 
-Install the skill directly from GitHub:
-
-```bash
-cortex skill add streamlit/agent-skills
-```
-
-### Other AI Assistants
-
-| Agent | Skills Folder | Documentation |
-|-------|---------------|---------------|
-| OpenAI Codex | `.codex/skills/` | [Codex Skills Docs](https://developers.openai.com/codex/skills/) |
-| Gemini CLI | `.gemini/skills/` | [Gemini CLI Skills Docs](https://geminicli.com/docs/cli/skills/) |
-| GitHub Copilot | `.github/skills/` | [Copilot Agent Skills Docs](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills) |
+Already installed — Cortex Code ships this skill by default; no manual step required.
 
 ## Contributing
 

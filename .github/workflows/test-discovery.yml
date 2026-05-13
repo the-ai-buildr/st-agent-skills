@@ -1,0 +1,43 @@
+name: test-discovery
+
+on:
+  pull_request:
+    paths:
+      - "developing-with-streamlit/**"
+      - "tests/**"
+      - ".github/workflows/test-discovery.yml"
+  push:
+    branches: [main]
+  schedule:
+    # Weekly — re-runs the suite against `streamlit` (latest from PyPI) even
+    # when nobody pushes, so we catch upstream changes (renamed bundled
+    # SKILL.md, restructured .agents/skills/, etc.) within ~7 days during
+    # quiet periods.
+    - cron: "0 12 * * 1"
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    defaults:
+      run:
+        # Use bash on Windows too (Git Bash, pre-installed on windows-latest).
+        # Lets us share the same wrapper command across both OSes.
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dev tools
+        run: python -m pip install --upgrade pip pytest uv pipenv poetry pdm
+
+      - name: Run discovery tests
+        run: pytest tests/discovery/ -v
